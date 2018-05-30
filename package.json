@@ -3,8 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "axios": "^0.18.0",
     "mapbox-gl": "^0.43.0",
+    "pbjs": "0.0.5",
     "prop-types": "^15.6.0",
+    "protobufjs": "^6.8.6",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
     "react-mapbox-gl": "^3.4.1",

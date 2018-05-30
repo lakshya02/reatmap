@@ -3,7 +3,7 @@ import ReactMap, { Layer, Feature, Marker } from 'react-mapbox-gl';
 //import ReactMapboxGl, { Layer, Feature, Marker } from "react-mapbox-gl";
 
 import styled from 'styled-components';
-
+import getUpdate from './apiCall';
 import stops from './src/stops.json';
 
 const accessToken = "pk.eyJ1IjoiYWxleDMxNjUiLCJhIjoiY2o0MHp2cGtiMGFrajMycG5nbzBuY2pjaiJ9.QDApU0XH2v35viSwQuln5w";
@@ -32,6 +32,7 @@ const mapStyle = {
 
 class App extends Component {
   constructor(props) {
+    getUpdate()
     super(props);
     this.state = {
       response: '',
@@ -102,7 +103,7 @@ class App extends Component {
           {this.state.arr[0] && this.state.arr[0].vehicle.position.longitude}
           {this.state.arr[0] && this.state.arr[0].vehicle.position.latitude}
         </p>
-        <p>
+        <p> 
           {this.state.arr.length}
         </p>
         {this.arrHandler()}
