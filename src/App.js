@@ -1,10 +1,11 @@
 import React, { Component } from 'react';
-import ReactMap, { Layer, Feature, Marker, Cluster, Popup  } from 'react-mapbox-gl';
+import ReactMap, { Layer, Feature, Marker, Cluster, Popup } from 'react-mapbox-gl';
 //import ReactMapboxGl, { Layer, Feature, Marker } from "react-mapbox-gl";
 
 import styled from 'styled-components';
 import { getVehicleUpdate, getVehiclePosition } from './Api';
 import stops from './src/stops.json';
+import { isNull } from 'util';
 
 const accessToken = "pk.eyJ1IjoiYWxleDMxNjUiLCJhIjoiY2o0MHp2cGtiMGFrajMycG5nbzBuY2pjaiJ9.QDApU0XH2v35viSwQuln5w";
 const style = "mapbox://styles/mapbox/dark-v9";
@@ -17,18 +18,18 @@ const polygonPaint = {
 const Map = ReactMap({
   accessToken
 });
-const clusterMarker= {
-    width: 30,
-    height: 30,
-    borderRadius: '50%',
-    backgroundColor: '#51D5A0',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    color: 'white',
-    border: '2px solid #56C498',
-    cursor: 'pointer'
-  }
+const clusterMarker = {
+  width: 30,
+  height: 30,
+  borderRadius: '50%',
+  backgroundColor: '#51D5A0',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  color: 'white',
+  border: '2px solid #56C498',
+  cursor: 'pointer'
+}
 
 const Mark = styled.div`
   background-color: #e74c3c;
@@ -54,14 +55,14 @@ class App extends Component {
       arr: [],
       width: 600,
       height: 400,
-      fetchUpdateResponse:null,
-      lngLat:null,
-      vehicleDetails:null
+      fetchUpdateResponse: null,
+      lngLat: null,
+      vehicleDetails: null
     };
     this.arrHandler = this.arrHandler.bind(this);
     this.handleClickTimestamp = this.handleClickTimestamp.bind(this);
-    this.handlePosition = this.handlePosition.bind(this); 
-    this.handleUpdate = this.handleUpdate.bind(this); 
+    this.handlePosition = this.handlePosition.bind(this);
+    this.handleUpdate = this.handleUpdate.bind(this);
     this.handleMarkerClick = this.handleMarkerClick.bind(this);
   }
   componentDidMount() {
@@ -93,18 +94,17 @@ class App extends Component {
 
   handlePosition = async () => {
     var result = await getVehiclePosition()
-    if(result && result.hasOwnProperty('entity')){
+    if (result && result.hasOwnProperty('entity')) {
       this.setState({
         arr: result.entity
       })
     }
-   
+
   }
-  
+
   handleUpdate = async () => {
     var result = await getVehicleUpdate()
-    if (result && result.hasOwnProperty('entity'))
-    {
+    if (result && result.hasOwnProperty('entity')) {
       this.setState({
         fetchUpdateResponse: result.entity
       })
@@ -113,17 +113,23 @@ class App extends Component {
   /**
    * Displays popup and set vehicleDetailsin state 
    */
-  handleMarkerClick = (e)=>{
+  handleMarkerClick = (e) => {
     console.log(e)
-    var filteredResponse = this.state.fetchUpdateResponse.filter(data =>  data.id === e.id);
+    if (this.state.fetchUpdateResponse == null) {
+      return;
+    }
+
+    var filteredResponse = this.state.fetchUpdateResponse.filter(data => data.id === e.id);
     let tripId = filteredResponse[0]['trip_update']['trip']['trip_id']
     let arrivalDelay = filteredResponse[0]['trip_update']['stop_time_update'][0]['arrival']['delay']
     let stopId = filteredResponse[0]['trip_update']['stop_time_update'][0]['stop_id']
+    let routeId = filteredResponse[0]['trip_update']['trip']['route_id']
     this.setState({
-      vehicleDetails:{
+      vehicleDetails: {
         delay: arrivalDelay,
         tripId: tripId,
-        stopId:stopId
+        stopId: stopId,
+        routeId: routeId
       }
     })
     this.setState({
@@ -131,8 +137,8 @@ class App extends Component {
     })
   }
 
- 
-  
+
+
   arrHandler() {
     let tripId;
     if (this.state.arr[0]) {
@@ -156,11 +162,11 @@ class App extends Component {
 
   }
   render() {
-     /**
-      * Currently Not using this cluster, It will wrap Markers
-      * @param {*} coordinates 
-      * @param {*} pointCount 
-      */
+    /**
+     * Currently Not using this cluster, It will wrap Markers
+     * @param {*} coordinates 
+     * @param {*} pointCount 
+     */
     const clusterMarker = (
       coordinates,
       pointCount
@@ -203,48 +209,48 @@ class App extends Component {
           pitch={[40]}
           zoom={[14]}
         >
-         
+
           {
             this.state.vehicleDetails &&
             <Popup
-            coordinates={this.state.lngLat}
-            offset={{
-              'bottom-left': [12, -38], 'bottom': [0, -38], 'bottom-right': [-12, -38]
-            }}>
-            <h1>
-              Trip: {this.state.vehicleDetails && this.state.vehicleDetails.tripId===undefined?"NA":this.state.vehicleDetails.tripId}
-            </h1>
-            <p>
-              Delay : {this.state.vehicleDetails && this.state.vehicleDetails.delay===undefined?"NA":this.state.vehicleDetails.delay}
-            </p>
-            <p>
-              Stop Id : {this.state.vehicleDetails && this.state.vehicleDetails.stopId===undefined?"NA":this.state.vehicleDetails.stopId}
-            </p>
-            <p>
-              Current Stop : NA
-            </p>
-          </Popup>
+              coordinates={this.state.lngLat}
+              offset={{
+                'bottom-left': [12, -38], 'bottom': [0, -38], 'bottom-right': [-12, -38]
+              }}>
+              <h1>
+                Trip: {this.state.vehicleDetails && this.state.vehicleDetails.tripId === undefined ? "NA" : this.state.vehicleDetails.tripId}
+              </h1>
+              <p>
+                Delay: {this.state.vehicleDetails && this.state.vehicleDetails.delay === undefined ? "NA" : this.state.vehicleDetails.delay}
+              </p>
+              <p>
+                StopId: {this.state.vehicleDetails && this.state.vehicleDetails.stopId === undefined ? "NA" : this.state.vehicleDetails.stopId}
+              </p>
+              <p>
+                RouteId: {this.state.vehicleDetails && this.state.vehicleDetails.routeId === undefined ? "NA" : this.state.vehicleDetails.routeId}
+              </p>
+            </Popup>
           }
-          
+
           {/**
            * Displaying First 10, Because of the performance issue, once Cluster starts working performance will be improved
            */
             this.state.arr.slice(0, 10).map((markers, index) => {
-              
-                return (
 
-                  <Marker key={markers.id}
-                    coordinates={{ lng: markers && markers.vehicle.position.longitude || -71.07636094093323, lat: markers && markers.vehicle.position.latitude || 42.35034583215539 }}
-                    anchor="bottom"
-                onClick={(e) => { this.handleMarkerClick(markers) }}
-                  >
-                    <Mark />
-                  </Marker>
-                )
-             
-             
+              return (
+
+                <Marker key={markers.id}
+                  coordinates={{ lng: markers && markers.vehicle.position.longitude || -71.07636094093323, lat: markers && markers.vehicle.position.latitude || 42.35034583215539 }}
+                  anchor="bottom"
+                  onClick={(e) => { this.handleMarkerClick(markers) }}
+                >
+                  <Mark />
+                </Marker>
+              )
+
+
             })
-          } 
+          }
 
           {/**
             * Cluster Component, to be used in future 
@@ -265,15 +271,15 @@ class App extends Component {
           })
         } 
         </Cluster> */}
-        
+
           <Layer type="fill"
             paint={polygonPaint}
-            >
+          >
             {Object.keys(stops).map((key, index) => (
               <Feature
                 key={key}
                 coordinates={[stops[key].geometry.coordinates[0]]}
-               
+
               />
             ))}
           </Layer>
