@@ -62,7 +62,7 @@ class App extends Component {
     this.handleClickTimestamp = this.handleClickTimestamp.bind(this);
     this.handlePosition = this.handlePosition.bind(this); 
     this.handleUpdate = this.handleUpdate.bind(this); 
-    this.handleHover = this.handleHover.bind(this);
+    this.handleMarkerClick = this.handleMarkerClick.bind(this);
   }
   componentDidMount() {
     this.handleUpdate()
@@ -227,7 +227,7 @@ class App extends Component {
           }
           
           {/**
-           * Displaying First 10, Because of the performance issue
+           * Displaying First 10, Because of the performance issue, once Cluster starts working performance will be improved
            */
             this.state.arr.slice(0, 10).map((markers, index) => {
               
@@ -236,7 +236,7 @@ class App extends Component {
                   <Marker key={markers.id}
                     coordinates={{ lng: markers && markers.vehicle.position.longitude || -71.07636094093323, lat: markers && markers.vehicle.position.latitude || 42.35034583215539 }}
                     anchor="bottom"
-                    onClick={(e) => { this.handleHover(markers) }}
+                onClick={(e) => { this.handleMarkerClick(markers) }}
                   >
                     <Mark />
                   </Marker>
