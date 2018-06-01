@@ -126,7 +126,7 @@ class App extends Component {
     let routeId = filteredResponse[0]['trip_update']['trip']['route_id']
     this.setState({
       vehicleDetails: {
-        delay: arrivalDelay,
+        delay: arrivalDelay - 240,
         tripId: tripId,
         stopId: stopId,
         routeId: routeId
@@ -221,10 +221,10 @@ class App extends Component {
                 Trip: {this.state.vehicleDetails && this.state.vehicleDetails.tripId === undefined ? "NA" : this.state.vehicleDetails.tripId}
               </h1>
               <p>
-                Delay: {this.state.vehicleDetails && this.state.vehicleDetails.delay === undefined ? "NA" : this.state.vehicleDetails.delay}
+                Delay: {this.state.vehicleDetails && this.state.vehicleDetails.delay === undefined ? "NA" : this.state.vehicleDetails.delay} mins
               </p>
               <p>
-                StopId: {this.state.vehicleDetails && this.state.vehicleDetails.stopId === undefined ? "NA" : this.state.vehicleDetails.stopId}
+                StopId: {this.state.vehicleDetails && this.state.vehicleDetails.stopId === undefined ? "NA" : this.state.vehicleDetails.stopId} next stop
               </p>
               <p>
                 RouteId: {this.state.vehicleDetails && this.state.vehicleDetails.routeId === undefined ? "NA" : this.state.vehicleDetails.routeId}

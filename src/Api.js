@@ -16,9 +16,9 @@ export function getVehicleUpdate() {
   }).then(async (payload) => {
     let decodedJson = await decodeBuffer(root, payload)
     return decodedJson
-    }).catch(err => {
-      console.log(err)    
-    })
+  }).catch(err => {
+    console.log(err)
+  })
 }
 
 export function getVehiclePosition() {
@@ -26,18 +26,18 @@ export function getVehiclePosition() {
     method: 'get',
     url: baseUrl + '/fetchposition',
     headers: headers
-  }).then(async (payload )=> {
+  }).then(async (payload) => {
     let decodedJson = await decodeBuffer(root, payload)
     return decodedJson
-  }).catch(err=>{
+  }).catch(err => {
     console.log(err)
   })
 }
 
-let decodeBuffer = (root, payload)=>{
-  let promise  = new Promise((resolve,reject)=>{
+let decodeBuffer = (root, payload) => {
+  let promise = new Promise((resolve, reject) => {
     root.load("./test.proto", { keepCase: true }, function (err, root) {
-      if(err)
+      if (err)
         reject(err)
       var FeedMessage = root.lookupType("test_realtime.FeedMessage");
       let buffer = payload.data.body.data
@@ -47,5 +47,5 @@ let decodeBuffer = (root, payload)=>{
       resolve(json)
     })
   })
-  return promise 
+  return promise
 }
