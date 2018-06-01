@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
-import ReactMap, { Layer, Feature, Marker, Cluster, Popup } from 'react-mapbox-gl';
+import ReactMap, { Layer, Feature, Marker } from 'react-mapbox-gl';
 //import ReactMapboxGl, { Layer, Feature, Marker } from "react-mapbox-gl";
 
-import styled from 'styled-components';
 import { getVehicleUpdate, getVehiclePosition } from './Api';
 import stops from './src/stops.json';
 import { isNull } from 'util';
+import ClusterElement from './clusterElement';
 
 const accessToken = "pk.eyJ1IjoiYWxleDMxNjUiLCJhIjoiY2o0MHp2cGtiMGFrajMycG5nbzBuY2pjaiJ9.QDApU0XH2v35viSwQuln5w";
 const style = "mapbox://styles/mapbox/dark-v9";
@@ -15,35 +15,15 @@ const polygonPaint = {
   'fill-color': '#F98888',
   'fill-opacity': 0.5
 };
+
 const Map = ReactMap({
   accessToken
 });
-const clusterMarker = {
-  width: 30,
-  height: 30,
-  borderRadius: '50%',
-  backgroundColor: '#51D5A0',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  color: 'white',
-  border: '2px solid #56C498',
-  cursor: 'pointer'
-}
 
-const Mark = styled.div`
-  background-color: #e74c3c;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  border: 4px solid #eaa29b;
-`;
 const mapStyle = {
   height: '100vh',
   width: '100vw'
 };
-
-
 
 class App extends Component {
   constructor(props) {
@@ -57,17 +37,26 @@ class App extends Component {
       height: 400,
       fetchUpdateResponse: null,
       lngLat: null,
-      vehicleDetails: null
+      vehicleDetails: null,
+      zoom:14,
+      center: { lng:  -71.07636094093323, lat: 42.35034583215539 }
     };
     this.arrHandler = this.arrHandler.bind(this);
     this.handleClickTimestamp = this.handleClickTimestamp.bind(this);
-    this.handlePosition = this.handlePosition.bind(this);
-    this.handleUpdate = this.handleUpdate.bind(this);
-    this.handleMarkerClick = this.handleMarkerClick.bind(this);
+    this.handleZoom = this.handleZoom.bind(this);
+    this.handleDrag = this.handleDrag.bind(this);
+    this.handleParallelCalls = this.handleParallelCalls.bind(this);
   }
-  componentDidMount() {
-    this.handleUpdate()
-    this.handlePosition()
+
+  componentWillMount() {
+    /**
+     * Fetch data on mount and triggers after every 20 sec
+     */
+    this.handleParallelCalls()
+    setInterval(()=>{
+      this.handleParallelCalls()
+    },20000)
+    
   }
   callApi2 = async () => {
     const response = await fetch('/api/transit');
@@ -92,52 +81,28 @@ class App extends Component {
       .catch(err => console.log(err));
   }
 
-  handlePosition = async () => {
-    var result = await getVehiclePosition()
-    if (result && result.hasOwnProperty('entity')) {
+  handleParallelCalls= async () => {
+    var results = await Promise.all([getVehiclePosition(), getVehicleUpdate()])
+    if (results.length>0 && results[0].hasOwnProperty('entity') && results[1].hasOwnProperty('entity')) {
       this.setState({
-        arr: result.entity
+        arr: results[0].entity,
+        fetchUpdateResponse: results[1].entity
       })
     }
-
+    return results;
   }
-
-  handleUpdate = async () => {
-    var result = await getVehicleUpdate()
-    if (result && result.hasOwnProperty('entity')) {
-      this.setState({
-        fetchUpdateResponse: result.entity
-      })
-    }
-  }
-  /**
-   * Displays popup and set vehicleDetailsin state 
-   */
-  handleMarkerClick = (e) => {
-    console.log(e)
-    if (this.state.fetchUpdateResponse == null) {
-      return;
-    }
-
-    var filteredResponse = this.state.fetchUpdateResponse.filter(data => data.id === e.id);
-    let tripId = filteredResponse[0]['trip_update']['trip']['trip_id']
-    let arrivalDelay = filteredResponse[0]['trip_update']['stop_time_update'][0]['arrival']['delay']
-    let stopId = filteredResponse[0]['trip_update']['stop_time_update'][0]['stop_id']
-    let routeId = filteredResponse[0]['trip_update']['trip']['route_id']
+  
+  handleZoom = (e) => {
     this.setState({
-      vehicleDetails: {
-        delay: arrivalDelay - 240,
-        tripId: tripId,
-        stopId: stopId,
-        routeId: routeId
-      }
-    })
-    this.setState({
-      lngLat: [e.vehicle.position.longitude, e.vehicle.position.latitude]
+      zoom:[e.getZoom()]
     })
   }
 
-
+  handleDrag = (e) => {
+    this.setState({
+      center: e.getCenter()
+    })
+  }
 
   arrHandler() {
     let tripId;
@@ -162,24 +127,6 @@ class App extends Component {
 
   }
   render() {
-    /**
-     * Currently Not using this cluster, It will wrap Markers
-     * @param {*} coordinates 
-     * @param {*} pointCount 
-     */
-    const clusterMarker = (
-      coordinates,
-      pointCount
-    ) => (
-        <Marker
-          key={coordinates.toString()}
-          coordinates={coordinates}
-          style={clusterMarker}
-        >
-          <div>{pointCount}</div>
-        </Marker>
-      );
-
     return (
       <div className="App">
         <button onClick={this.handleClickTimestamp}>
@@ -201,89 +148,36 @@ class App extends Component {
         </p>
         {this.arrHandler()}
 
-        <Map
-          style={style}
-          containerStyle={mapStyle}
-          center={{ lng: this.state.arr[0] && this.state.arr[0].vehicle.position.longitude || -71.07636094093323, lat: this.state.arr[0] && this.state.arr[0].vehicle.position.latitude || 42.35034583215539 }}
-          bearing={[20]}
-          pitch={[40]}
-          zoom={[14]}
-        >
 
-          {
-            this.state.vehicleDetails &&
-            <Popup
-              coordinates={this.state.lngLat}
-              offset={{
-                'bottom-left': [12, -38], 'bottom': [0, -38], 'bottom-right': [-12, -38]
-              }}>
-              <h1>
-                Trip: {this.state.vehicleDetails && this.state.vehicleDetails.tripId === undefined ? "NA" : this.state.vehicleDetails.tripId}
-              </h1>
-              <p>
-                Delay: {this.state.vehicleDetails && this.state.vehicleDetails.delay === undefined ? "NA" : this.state.vehicleDetails.delay} mins
-              </p>
-              <p>
-                StopId: {this.state.vehicleDetails && this.state.vehicleDetails.stopId === undefined ? "NA" : this.state.vehicleDetails.stopId} next stop
-              </p>
-              <p>
-                RouteId: {this.state.vehicleDetails && this.state.vehicleDetails.routeId === undefined ? "NA" : this.state.vehicleDetails.routeId}
-              </p>
-            </Popup>
-          }
+        {
+          this.state.arr.length>0 &&
+            <Map
+              style={style}
+              containerStyle={mapStyle}
+              center={this.state.center}
+              bearing={[20]}
+              pitch={[40]}
+              zoom={[this.state.zoom]}
+              //onZoomEnd={this.handleZoom}   // Degrading performance of browser, need to find a better way to keep zoom upon refresh
+              onDragEnd={this.handleDrag}
+            >
 
-          {/**
-           * Displaying First 10, Because of the performance issue, once Cluster starts working performance will be improved
-           */
-            this.state.arr.slice(0, 10).map((markers, index) => {
+              <ClusterElement fetchUpdateResponse={this.state.fetchUpdateResponse} arr={this.state.arr}></ClusterElement>
 
-              return (
-
-                <Marker key={markers.id}
-                  coordinates={{ lng: markers && markers.vehicle.position.longitude || -71.07636094093323, lat: markers && markers.vehicle.position.latitude || 42.35034583215539 }}
-                  anchor="bottom"
-                  onClick={(e) => { this.handleMarkerClick(markers) }}
-                >
-                  <Mark />
-                </Marker>
-              )
-
-
-            })
-          }
-
-          {/**
-            * Cluster Component, to be used in future 
-           */
-            /* <Cluster ClusterMarkerFactory={this.clusterMarker}>
-            
-          {
-            this.state.arr.map((markers,index) => {
-              return (
-                <Marker key={markers.id}
-                  coordinates={{ lng: markers && markers.vehicle.position.longitude || -71.07636094093323, lat: markers && markers.vehicle.position.latitude || 42.35034583215539 }}
-                  anchor="bottom"
-                  onClick={() => { this.handleHover(markers)}}
-                >
-                  <Mark />
-                </Marker>
-              )
-          })
-        } 
-        </Cluster> */}
-
-          <Layer type="fill"
-            paint={polygonPaint}
-          >
-            {Object.keys(stops).map((key, index) => (
-              <Feature
-                key={key}
-                coordinates={[stops[key].geometry.coordinates[0]]}
-
-              />
-            ))}
-          </Layer>
-        </Map>
+              <Layer type="fill"
+                paint={polygonPaint}
+              >
+                {
+                  Object.keys(stops).map((key, index) => (
+                    <Feature
+                      key={key}
+                      coordinates={[stops[key].geometry.coordinates[0]]}
+                    />
+                  ))
+                }
+              </Layer>
+            </Map>
+        }         
       </div>
     );
   }
