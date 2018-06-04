@@ -24,7 +24,7 @@ const mapStyle = {
   height: '100vh',
   width: '100vw'
 };
-
+let zoom = [16];
 class App extends Component {
   constructor(props) {
     super(props);
@@ -92,10 +92,8 @@ class App extends Component {
     return results;
   }
   
-  handleZoom = (e) => {
-    this.setState({
-      zoom:[e.getZoom()]
-    })
+  handleZoom = (e)=>{
+    zoom =[e.getZoom()]
   }
 
   handleDrag = (e) => {
@@ -157,14 +155,14 @@ class App extends Component {
               center={this.state.center}
               bearing={[20]}
               pitch={[40]}
-              zoom={[this.state.zoom]}
-              //onZoomEnd={this.handleZoom}   // Degrading performance of browser, need to find a better way to keep zoom upon refresh
+              zoom={[zoom]}
+              onZoomEnd={this.handleZoom}   
               onDragEnd={this.handleDrag}
             >
 
               <ClusterElement fetchUpdateResponse={this.state.fetchUpdateResponse} arr={this.state.arr}></ClusterElement>
 
-              <Layer type="fill"
+             <Layer type="fill"
                 paint={polygonPaint}
               >
                 {
